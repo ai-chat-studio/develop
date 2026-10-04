@@ -111,6 +111,21 @@ h1 {
   background: #14181f;
 }
 
+.message-enter {
+  animation: messageIn 280ms ease-out both;
+}
+
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .message-meta {
   font-size: 11px;
   letter-spacing: 0.08em;
@@ -211,11 +226,15 @@ button:disabled {
 
 .live-chat-card {
   min-height: 72vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .live-chat {
-  min-height: 65vh;
-  max-height: 76vh;
+  min-height: 54vh;
+  max-height: 64vh;
+  flex: 1;
+  padding-bottom: 18px;
 }
 
 .live-chat .message-body {
@@ -224,6 +243,95 @@ button:disabled {
 
 .live-chat .message-meta {
   font-size: 12px;
+}
+
+/* Simulated chat composer shown to the viewer */
+.fake-composer-wrap {
+  border-top: 1px solid #2a3039;
+  padding-top: 16px;
+  margin-top: 10px;
+}
+
+.fake-composer {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.fake-input {
+  flex: 1;
+  min-height: 62px;
+  max-height: 170px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid #343b46;
+  background: #10141a;
+  color: #f3f4f6;
+  font-size: clamp(17px, 1.8vw, 23px);
+  line-height: 1.45;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.025);
+}
+
+.fake-input:empty::before {
+  content: "Message AI…";
+  color: #59616d;
+}
+
+.fake-send-button {
+  min-width: 96px;
+  height: 54px;
+  justify-content: center;
+  border-radius: 16px;
+  background: #d52323;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(213, 35, 35, 0.22);
+  pointer-events: none;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    filter 120ms ease;
+}
+
+.fake-send-button-press {
+  transform: translateY(3px) scale(0.96);
+  box-shadow: 0 2px 8px rgba(213, 35, 35, 0.2);
+  filter: brightness(0.82);
+}
+
+.fake-typing-status {
+  min-height: 18px;
+  margin-top: 8px;
+  padding-left: 6px;
+  color: #707885;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.typing-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.15em;
+  margin-left: 2px;
+  vertical-align: -0.16em;
+  background: transparent;
+}
+
+.typing-caret-active {
+  background: #e5e7eb;
+  animation: caretBlink 850ms steps(1) infinite;
+}
+
+@keyframes caretBlink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
 }
 
 @media (max-width: 650px) {
@@ -240,5 +348,16 @@ button:disabled {
   .topbar,
   .live-header {
     align-items: flex-end;
+  }
+
+  .fake-composer {
+    gap: 8px;
+  }
+
+  .fake-send-button {
+    min-width: 76px;
+    height: 50px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
 }

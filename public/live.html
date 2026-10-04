@@ -19,6 +19,24 @@
 
     <section class="live-chat-card">
       <div id="liveChat" class="chat live-chat"></div>
+
+      <div class="fake-composer-wrap">
+        <div class="fake-composer">
+          <div
+            id="fakeInput"
+            class="fake-input"
+            aria-label="Message being typed"
+          >
+            <span id="fakeInputText"></span><span id="typingCaret" class="typing-caret"></span>
+          </div>
+
+          <button id="fakeSendButton" class="fake-send-button" type="button" tabindex="-1">
+            Send
+          </button>
+        </div>
+
+        <div id="typingStatus" class="fake-typing-status">Ready</div>
+      </div>
     </section>
   </main>
 
