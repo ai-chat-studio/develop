@@ -3,39 +3,54 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Studio — MVP v0.2</title>
+  <title>AI Studio — MVP v0.3</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <main class="app">
     <header class="topbar">
       <div>
-        <div class="eyebrow">MVP v0.2</div>
+        <div class="eyebrow">MVP v0.3</div>
         <h1>AI Studio</h1>
       </div>
-      <div id="status" class="status status-offline">● offline</div>
+      <div>
+        <div id="status" class="status status-offline">● server offline</div>
+        <div id="bridgeStatus" class="status status-offline" style="margin-top:8px;">● bridge unknown</div>
+      </div>
     </header>
 
     <section class="card">
-      <div class="section-title">Полный ответ</div>
-      <textarea id="source" rows="16" maxlength="20000"
-        placeholder="Вставь сюда полный ответ с ключами 777ROCK777 и 777END777"></textarea>
+      <div class="section-title">Ты → AI</div>
+      <textarea id="prompt" rows="6" maxlength="10000"
+        placeholder="Напиши сообщение по-русски..."></textarea>
 
       <div class="actions">
-        <button id="example" class="primary">Вставить пример</button>
-        <button id="clear" class="secondary">Очистить</button>
+        <button id="sendAI" class="primary">Send to AI</button>
+        <button id="checkBridge" class="secondary">Проверить Bridge</button>
         <a class="button-link secondary" href="/live.html" target="_blank">Открыть LIVE</a>
+      </div>
+
+      <p id="aiState" class="hint">Готово к отправке.</p>
+    </section>
+
+    <section class="card">
+      <div class="section-title">Полный ответ AI</div>
+      <textarea id="source" rows="16" maxlength="30000"
+        placeholder="Здесь появится полный ответ: русский → 777ROCK777 → английский."></textarea>
+
+      <div class="actions">
+        <button id="clear" class="secondary">Очистить</button>
       </div>
     </section>
 
     <section class="card">
-      <div class="section-title">Что уйдёт в LIVE</div>
+      <div class="section-title">Что сейчас видит LIVE English</div>
       <div id="preview" class="preview empty">Английский блок пока не найден.</div>
     </section>
 
     <p class="hint">
-      LIVE берёт только текст между <strong>777ROCK777</strong> и <strong>777END777</strong>.
-      Всё после 777END777 остаётся только в Studio.
+      Studio обращается к локальному Bridge на <strong>127.0.0.1:8787</strong>.
+      Сервер берёт всё после <strong>777ROCK777</strong> и отправляет это в LIVE.
     </p>
   </main>
 
