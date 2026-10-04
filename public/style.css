@@ -245,7 +245,6 @@ button:disabled {
   font-size: 12px;
 }
 
-/* Simulated chat composer shown to the viewer */
 .fake-composer-wrap {
   border-top: 1px solid #2a3039;
   padding-top: 16px;
@@ -334,6 +333,95 @@ button:disabled {
   }
 }
 
+/* Workspace file events shown in LIVE */
+.file-card {
+  width: min(88%, 820px);
+  margin-right: auto;
+  padding: 14px 16px;
+  border: 1px solid #323a45;
+  border-radius: 16px;
+  background: #10151c;
+}
+
+.file-card-enter {
+  animation: fileCardIn 320ms ease-out both;
+}
+
+@keyframes fileCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.file-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.file-action {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+}
+
+.file-action-created {
+  color: #86efac;
+}
+
+.file-action-updated {
+  color: #fde68a;
+}
+
+.file-action-deleted {
+  color: #fca5a5;
+}
+
+.file-size {
+  color: #737c89;
+  font-size: 12px;
+}
+
+.file-path {
+  margin-top: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: clamp(15px, 1.6vw, 20px);
+  color: #e5e7eb;
+  overflow-wrap: anywhere;
+}
+
+.file-preview {
+  margin-top: 12px;
+  border-top: 1px solid #29303a;
+  padding-top: 10px;
+}
+
+.file-preview summary {
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.file-preview pre {
+  max-height: 340px;
+  overflow: auto;
+  margin: 12px 0 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: #0a0d12;
+  color: #cbd5e1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 @media (max-width: 650px) {
   .app,
   .live-shell {
@@ -341,7 +429,8 @@ button:disabled {
     padding-top: 18px;
   }
 
-  .message {
+  .message,
+  .file-card {
     width: 92%;
   }
 

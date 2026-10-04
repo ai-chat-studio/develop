@@ -141,13 +141,17 @@ sendAIBtn.addEventListener("click", async () => {
 Текущий разговор ведётся на русском языке.
 Ниже может быть краткая история предыдущих реплик.
 
+Ты работаешь внутри разрешённой рабочей папки AI-Studio-Workspace.
+Если пользователь просит создать, изменить или удалить проектные файлы,
+реально выполни эти файловые действия в рабочей папке.
+
 ИСТОРИЯ:
 ${recentContext || "(диалог только начинается)"}
 
 НОВЫЙ ВОПРОС ПОЛЬЗОВАТЕЛЯ:
 ${ruUser}
 
-ФОРМАТ ОТВЕТА ОБЯЗАТЕЛЕН И ДОЛЖЕН БЫТЬ ТОЧНО ТАКИМ:
+ФОРМАТ ТЕКСТОВОГО ОТВЕТА ОБЯЗАТЕЛЕН И ДОЛЖЕН БЫТЬ ТОЧНО ТАКИМ:
 
 [Сначала полный естественный ответ AI на русском языке.]
 
@@ -196,15 +200,21 @@ ${ruUser}
       throw new Error("AI вернул пустой ответ");
     }
 
+    const files = Array.isArray(data.files) ? data.files : [];
+
     rawAnswerEl.textContent = rawAnswer;
 
     socket.emit("conversation:add", {
       ruUser,
-      rawAnswer
+      rawAnswer,
+      files
     });
 
     promptEl.value = "";
-    aiStateEl.textContent = "Ответ получен. Русский и английский диалоги обновлены.";
+
+    aiStateEl.textContent = files.length
+      ? `Ответ получен. Изменено файлов: ${files.length}.`
+      : "Ответ получен. Русский и английский диалоги обновлены.";
   } catch (error) {
     console.error(error);
     aiStateEl.textContent = `Ошибка: ${error.message}`;

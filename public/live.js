@@ -26,6 +26,14 @@ function formatTime(iso) {
   }
 }
 
+function formatBytes(bytes) {
+  const value = Number(bytes) || 0;
+
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -63,10 +71,71 @@ function appendMessage(role, text, time, animate = true) {
   scrollToBottom();
 }
 
+function createFileCard(file, animate = true) {
+  const card = document.createElement("article");
+  card.className = "file-card";
+
+  if (animate) {
+    card.classList.add("file-card-enter");
+  }
+
+  const action = String(file.action || "updated").toUpperCase();
+
+  const header = document.createElement("div");
+  header.className = "file-card-header";
+
+  const badge = document.createElement("div");
+  badge.className = `file-action file-action-${String(file.action || "updated")}`;
+  badge.textContent = `FILE ${action}`;
+
+  const size = document.createElement("div");
+  size.className = "file-size";
+  size.textContent = formatBytes(file.size);
+
+  header.append(badge, size);
+
+  const path = document.createElement("div");
+  path.className = "file-path";
+  path.textContent = file.path || "unknown file";
+
+  card.append(header, path);
+
+  if (typeof file.content === "string" && file.content.length) {
+    const details = document.createElement("details");
+    details.className = "file-preview";
+
+    const summary = document.createElement("summary");
+    summary.textContent = "View file";
+
+    const pre = document.createElement("pre");
+    pre.textContent = file.content;
+
+    details.append(summary, pre);
+    card.appendChild(details);
+  }
+
+  return card;
+}
+
+function appendFiles(files, animate = true) {
+  if (!Array.isArray(files) || !files.length) return;
+
+  for (const file of files) {
+    liveChatEl.appendChild(createFileCard(file, animate));
+  }
+
+  scrollToBottom();
+}
+
 function renderExistingHistory() {
   liveChatEl.innerHTML = "";
 
-  const usable = history.filter((turn) => turn.enUser || turn.enAI);
+  const usable = history.filter(
+    (turn) =>
+      turn.enUser ||
+      turn.enAI ||
+      (Array.isArray(turn.files) && turn.files.length)
+  );
 
   if (!usable.length) {
     const empty = document.createElement("div");
@@ -86,6 +155,8 @@ function renderExistingHistory() {
     if (turn.enAI) {
       appendMessage("ai", turn.enAI, time, false);
     }
+
+    appendFiles(turn.files, false);
   }
 
   scrollToBottom();
@@ -97,8 +168,6 @@ function clearEmptyState() {
 }
 
 function typingDelayForChar(char) {
-  // Roughly "normal human" typing speed with small natural variation.
-  // Spaces and punctuation are a little slower.
   let base = 58 + Math.random() * 42;
 
   if (char === " ") base += 15;
@@ -153,6 +222,11 @@ async function animateTurn(turn) {
 
   if (turn.enAI) {
     appendMessage("ai", turn.enAI, time, true);
+    await sleep(450);
+  }
+
+  if (Array.isArray(turn.files) && turn.files.length) {
+    appendFiles(turn.files, true);
   }
 
   typingStatusEl.textContent = "Ready";
@@ -163,16 +237,17 @@ function queueTurnAnimation(turn) {
     .then(() => animateTurn(turn))
     .catch((error) => {
       console.error("Live animation error:", error);
+
       typingStatusEl.textContent = "Ready";
       fakeInputTextEl.textContent = "";
       typingCaretEl.classList.remove("typing-caret-active");
 
-      // Fallback: never lose the actual conversation.
       const time = formatTime(turn.createdAt);
       clearEmptyState();
 
       if (turn.enUser) appendMessage("user", turn.enUser, time, false);
       if (turn.enAI) appendMessage("ai", turn.enAI, time, false);
+      appendFiles(turn.files, false);
     });
 }
 
