@@ -7,37 +7,69 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body class="live-body">
-  <main class="live-shell">
+  <main class="live-shell live-shell-wide">
     <header class="live-header">
       <div>
-        <div class="eyebrow">LIVE CONVERSATION</div>
+        <div class="eyebrow">LIVE AI DEVELOPMENT</div>
         <h1>AI Studio</h1>
       </div>
 
       <div id="status" class="status status-offline">● offline</div>
     </header>
 
-    <section class="live-chat-card">
-      <div id="liveChat" class="chat live-chat"></div>
+    <div class="live-grid">
+      <section class="live-chat-card">
+        <div id="liveChat" class="chat live-chat"></div>
 
-      <div class="fake-composer-wrap">
-        <div class="fake-composer">
-          <div
-            id="fakeInput"
-            class="fake-input"
-            aria-label="Message being typed"
-          >
-            <span id="fakeInputText"></span><span id="typingCaret" class="typing-caret"></span>
+        <div class="fake-composer-wrap">
+          <div class="fake-composer">
+            <div id="fakeInput" class="fake-input" aria-label="Message being typed">
+              <span id="fakeInputText"></span><span id="typingCaret" class="typing-caret"></span>
+            </div>
+
+            <button id="fakeSendButton" class="fake-send-button" type="button" tabindex="-1">
+              Send
+            </button>
           </div>
 
-          <button id="fakeSendButton" class="fake-send-button" type="button" tabindex="-1">
-            Send
-          </button>
+          <div id="typingStatus" class="fake-typing-status">Ready</div>
+        </div>
+      </section>
+
+      <aside class="workspace-panel">
+        <div class="workspace-topbar">
+          <div>
+            <div class="workspace-kicker">WORKSPACE</div>
+            <div id="workspaceName" class="workspace-name">AI-Studio-Workspace</div>
+          </div>
+          <div id="workspaceMeta" class="workspace-meta">0 files</div>
         </div>
 
-        <div id="typingStatus" class="fake-typing-status">Ready</div>
-      </div>
-    </section>
+        <div class="workspace-body">
+          <div class="workspace-explorer-section">
+            <div class="workspace-section-label">EXPLORER</div>
+            <div id="workspaceTree" class="workspace-tree">
+              <div class="workspace-empty">Waiting for workspace…</div>
+            </div>
+          </div>
+
+          <div class="editor-section">
+            <div class="editor-tabbar">
+              <div id="editorFilename" class="editor-filename">No file selected</div>
+              <div id="editorLanguage" class="editor-language"></div>
+            </div>
+
+            <div id="editorEmpty" class="editor-empty">
+              Select a text file from Explorer
+            </div>
+
+            <div id="codeEditor" class="code-editor hidden">
+              <div id="codeLines" class="code-lines"></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
   </main>
 
   <script src="/socket.io/socket.io.js"></script>

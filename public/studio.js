@@ -86,6 +86,7 @@ async function checkBridge() {
     const data = await response.json();
     const ok = Boolean(data.ok);
     setBridgeStatus(ok);
+
     return ok;
   } catch (error) {
     console.error("Bridge health check failed:", error);
@@ -94,7 +95,41 @@ async function checkBridge() {
   }
 }
 
-socket.on("connect", () => setServerStatus(true));
+async function syncWorkspace(snapshotFromAsk = null) {
+  try {
+    if (snapshotFromAsk && Array.isArray(snapshotFromAsk.files)) {
+      socket.emit("workspace:update", snapshotFromAsk);
+      return true;
+    }
+
+    const response = await fetch(`${BRIDGE_URL}/workspace-snapshot`, {
+      method: "GET",
+      cache: "no-store"
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || `HTTP ${response.status}`);
+    }
+
+    socket.emit("workspace:update", data.workspace);
+    return true;
+  } catch (error) {
+    console.error("Workspace sync failed:", error);
+    return false;
+  }
+}
+
+socket.on("connect", async () => {
+  setServerStatus(true);
+
+  const bridgeOk = await checkBridge();
+  if (bridgeOk) {
+    syncWorkspace();
+  }
+});
+
 socket.on("disconnect", () => setServerStatus(false));
 
 socket.on("conversation:state", (state) => {
@@ -110,8 +145,13 @@ socket.on("conversation:turn", (turn) => {
 checkBridgeBtn.addEventListener("click", async () => {
   aiStateEl.textContent = "Проверяю локальный Bridge...";
   const ok = await checkBridge();
+
+  if (ok) {
+    await syncWorkspace();
+  }
+
   aiStateEl.textContent = ok
-    ? "Bridge подключён."
+    ? "Bridge подключён. Workspace синхронизирован."
     : "Bridge не отвечает. Проверь, что на Mac запущен node bridge.js.";
 });
 
@@ -138,9 +178,6 @@ sendAIBtn.addEventListener("click", async () => {
   const bilingualPrompt = `
 Ты отвечаешь внутри двуязычной AI Studio.
 
-Текущий разговор ведётся на русском языке.
-Ниже может быть краткая история предыдущих реплик.
-
 Ты работаешь внутри разрешённой рабочей папки AI-Studio-Workspace.
 Если пользователь просит создать, изменить или удалить проектные файлы,
 реально выполни эти файловые действия в рабочей папке.
@@ -151,25 +188,21 @@ ${recentContext || "(диалог только начинается)"}
 НОВЫЙ ВОПРОС ПОЛЬЗОВАТЕЛЯ:
 ${ruUser}
 
-ФОРМАТ ТЕКСТОВОГО ОТВЕТА ОБЯЗАТЕЛЕН И ДОЛЖЕН БЫТЬ ТОЧНО ТАКИМ:
+ФОРМАТ ТЕКСТОВОГО ОТВЕТА ОБЯЗАТЕЛЕН:
 
-[Сначала полный естественный ответ AI на русском языке.]
+[Полный естественный ответ AI на русском.]
 
 777ROCK777
 
 777USER777
-[Здесь дай естественный английский перевод ТОЛЬКО нового вопроса пользователя.]
+[Английский перевод только нового вопроса пользователя.]
 777USEROFF777
 
-[Здесь дай полный английский эквивалент русского ответа AI.]
+[Полный английский эквивалент русского ответа AI.]
 
 ВАЖНО:
 - Не используй 777END777.
-- 777ROCK777 должен встречаться ровно один раз.
-- 777USER777 должен встречаться ровно один раз.
-- 777USEROFF777 должен встречаться ровно один раз.
-- Не добавляй текст до русского ответа.
-- Между 777USER777 и 777USEROFF777 должен быть только перевод вопроса пользователя.
+- Каждый из трёх маркеров должен встречаться ровно один раз.
 - После 777USEROFF777 должен быть только полный английский ответ AI.
 `.trim();
 
@@ -180,12 +213,8 @@ ${ruUser}
   try {
     const response = await fetch(`${BRIDGE_URL}/ask`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        prompt: bilingualPrompt
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: bilingualPrompt })
     });
 
     const data = await response.json();
@@ -210,11 +239,17 @@ ${ruUser}
       files
     });
 
+    if (data.workspace) {
+      await syncWorkspace(data.workspace);
+    } else {
+      await syncWorkspace();
+    }
+
     promptEl.value = "";
 
     aiStateEl.textContent = files.length
-      ? `Ответ получен. Изменено файлов: ${files.length}.`
-      : "Ответ получен. Русский и английский диалоги обновлены.";
+      ? `Ответ получен. Изменено файлов: ${files.length}. Workspace обновлён.`
+      : "Ответ получен. Workspace обновлён.";
   } catch (error) {
     console.error(error);
     aiStateEl.textContent = `Ошибка: ${error.message}`;
@@ -239,4 +274,8 @@ clearBtn.addEventListener("click", () => {
   aiStateEl.textContent = "Диалог очищен.";
 });
 
-checkBridge();
+checkBridge().then((ok) => {
+  if (ok && socket.connected) {
+    syncWorkspace();
+  }
+});
