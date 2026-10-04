@@ -67,6 +67,50 @@ function parseModelAnswer(rawText) {
   };
 }
 
+function sanitizeFiles(input) {
+  if (!Array.isArray(input)) return [];
+
+  const allowedActions = new Set(["created", "updated", "deleted"]);
+
+  return input
+    .slice(0, 100)
+    .map((file) => {
+      const action = String(file?.action || "").toLowerCase();
+      const filePath = String(file?.path || "")
+        .replace(/\\/g, "/")
+        .trim()
+        .slice(0, 500);
+
+      if (!allowedActions.has(action)) return null;
+      if (!filePath) return null;
+      if (filePath.startsWith("/") || filePath.includes("../")) return null;
+
+      const sizeRaw = Number(file?.size);
+      const size = Number.isFinite(sizeRaw) && sizeRaw >= 0 ? sizeRaw : 0;
+
+      const extension = String(file?.extension || "")
+        .trim()
+        .slice(0, 30);
+
+      let content = null;
+
+      if (typeof file?.content === "string") {
+        // Keep Live payloads bounded even if Bridge is later configured
+        // to return larger files.
+        content = file.content.slice(0, 200000);
+      }
+
+      return {
+        action,
+        path: filePath,
+        size,
+        extension,
+        content
+      };
+    })
+    .filter(Boolean);
+}
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
@@ -79,6 +123,7 @@ io.on("connection", (socket) => {
   socket.on("conversation:add", (payload) => {
     const ruUser = String(payload?.ruUser || "").trim().slice(0, 10000);
     const rawAnswer = String(payload?.rawAnswer || "").trim().slice(0, 50000);
+    const files = sanitizeFiles(payload?.files);
 
     if (!ruUser || !rawAnswer) return;
 
@@ -91,7 +136,8 @@ io.on("connection", (socket) => {
       ruAI: parsed.ruAI,
       enUser: parsed.enUser,
       enAI: parsed.enAI,
-      rawAnswer
+      rawAnswer,
+      files
     };
 
     state.history.push(turn);
@@ -113,7 +159,7 @@ io.on("connection", (socket) => {
 });
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`AI Studio MVP v0.4 running on port ${PORT}`);
+  console.log(`AI Studio MVP v0.6 running on port ${PORT}`);
   console.log(`Studio: http://localhost:${PORT}/studio.html`);
   console.log(`Live:   http://localhost:${PORT}/live.html`);
 });
