@@ -5,23 +5,29 @@
   color: #f3f4f6;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top, rgba(255,255,255,0.06), transparent 34rem), #0d0f13;
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,0.06), transparent 34rem),
+    #0d0f13;
 }
 
-.app, .live-shell {
-  width: min(980px, calc(100% - 32px));
+.app,
+.live-shell {
+  width: min(1000px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 32px 0 56px;
+  padding: 30px 0 54px;
 }
 
-.topbar, .live-header {
+.topbar,
+.live-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 20px;
@@ -40,17 +46,30 @@ h1 {
   line-height: 1;
 }
 
+.status-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
 .status {
-  font-size: 14px;
-  padding: 8px 12px;
+  font-size: 13px;
+  padding: 7px 11px;
   border: 1px solid #2b3039;
   border-radius: 999px;
 }
 
-.status-online { color: #d1fae5; }
-.status-offline { color: #fecaca; }
+.status-online {
+  color: #d1fae5;
+}
 
-.card, .live-card {
+.status-offline {
+  color: #fecaca;
+}
+
+.card,
+.live-chat-card {
   background: rgba(20, 23, 29, 0.94);
   border: 1px solid #282d36;
   border-radius: 18px;
@@ -65,10 +84,51 @@ h1 {
   margin-bottom: 12px;
 }
 
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 220px;
+  max-height: 58vh;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.message {
+  width: min(82%, 760px);
+  border-radius: 18px;
+  padding: 14px 16px;
+  border: 1px solid #2c323d;
+}
+
+.message-user {
+  margin-left: auto;
+  background: #20252e;
+}
+
+.message-ai {
+  margin-right: auto;
+  background: #14181f;
+}
+
+.message-meta {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #8b93a1;
+  margin-bottom: 7px;
+}
+
+.message-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
 textarea {
   width: 100%;
   resize: vertical;
-  min-height: 320px;
+  min-height: 126px;
   padding: 14px;
   border-radius: 14px;
   border: 1px solid #303641;
@@ -79,7 +139,9 @@ textarea {
   outline: none;
 }
 
-textarea:focus { border-color: #596273; }
+textarea:focus {
+  border-color: #596273;
+}
 
 .actions {
   display: flex;
@@ -88,7 +150,8 @@ textarea:focus { border-color: #596273; }
   flex-wrap: wrap;
 }
 
-button, .button-link {
+button,
+.button-link {
   appearance: none;
   border: 0;
   border-radius: 12px;
@@ -98,6 +161,11 @@ button, .button-link {
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: wait;
 }
 
 .primary {
@@ -110,52 +178,67 @@ button, .button-link {
   color: #e5e7eb;
 }
 
-.preview, .live-text {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  line-height: 1.65;
+.hint {
+  color: #7f8794;
+  font-size: 13px;
+  line-height: 1.55;
 }
 
-.preview { min-height: 110px; }
+.empty {
+  color: #6b7280;
+  margin: auto;
+}
+
+.debug-card summary {
+  cursor: pointer;
+  color: #aab1bc;
+}
+
+.debug-card pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #9ca3af;
+  line-height: 1.5;
+}
 
 .live-body {
   background: #090b0f;
 }
 
 .live-shell {
-  width: min(1100px, calc(100% - 48px));
+  width: min(1120px, calc(100% - 48px));
 }
 
-.live-card {
-  min-height: 62vh;
-  display: flex;
-  align-items: flex-start;
+.live-chat-card {
+  min-height: 72vh;
 }
 
-.live-text {
-  font-size: clamp(22px, 3vw, 38px);
-  width: 100%;
+.live-chat {
+  min-height: 65vh;
+  max-height: 76vh;
 }
 
-.empty { color: #6b7280; }
-
-.hint {
-  color: #7f8794;
-  font-size: 13px;
-  line-height: 1.55;
-  margin: 14px 2px 0;
+.live-chat .message-body {
+  font-size: clamp(18px, 2.2vw, 28px);
 }
 
-@media (max-width: 600px) {
-  .app, .live-shell {
-    width: min(100% - 20px, 980px);
+.live-chat .message-meta {
+  font-size: 12px;
+}
+
+@media (max-width: 650px) {
+  .app,
+  .live-shell {
+    width: min(100% - 20px, 1000px);
     padding-top: 18px;
   }
 
-  .card, .live-card {
-    border-radius: 14px;
-    padding: 14px;
+  .message {
+    width: 92%;
   }
 
-  textarea { min-height: 260px; }
+  .topbar,
+  .live-header {
+    align-items: flex-end;
+  }
 }
