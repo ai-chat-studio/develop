@@ -8,32 +8,63 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-const START_KEY = "777ROCK777";
-const END_KEY = "777END777";
+
+const ROCK = "777ROCK777";
+const USER_START = "777USER777";
+const USER_END = "777USEROFF777";
 
 const state = {
-  fullText: "",
-  englishText: "",
+  history: [],
   updatedAt: null
 };
 
-function extractEnglish(text) {
-  const src = String(text ?? "");
-  const start = src.indexOf(START_KEY);
-  if (start === -1) return "";
+function parseModelAnswer(rawText) {
+  const raw = String(rawText || "").trim();
 
-  const contentStart = start + START_KEY.length;
-  const end = src.indexOf(END_KEY, contentStart);
+  const rockIndex = raw.indexOf(ROCK);
 
-  const english = end === -1
-    ? src.slice(contentStart)
-    : src.slice(contentStart, end);
+  if (rockIndex === -1) {
+    return {
+      ruAI: raw,
+      enUser: "",
+      enAI: ""
+    };
+  }
 
-  return english.trim();
-}
+  const ruAI = raw.slice(0, rockIndex).trim();
+  const englishSection = raw.slice(rockIndex + ROCK.length).trim();
 
-function publishState() {
-  io.emit("state:update", state);
+  const userStartIndex = englishSection.indexOf(USER_START);
+  const userEndIndex = englishSection.indexOf(USER_END);
+
+  if (
+    userStartIndex === -1 ||
+    userEndIndex === -1 ||
+    userEndIndex < userStartIndex
+  ) {
+    return {
+      ruAI,
+      enUser: "",
+      enAI: englishSection
+        .replace(USER_START, "")
+        .replace(USER_END, "")
+        .trim()
+    };
+  }
+
+  const enUser = englishSection
+    .slice(userStartIndex + USER_START.length, userEndIndex)
+    .trim();
+
+  const enAI = englishSection
+    .slice(userEndIndex + USER_END.length)
+    .trim();
+
+  return {
+    ruAI,
+    enUser,
+    enAI
+  };
 }
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -43,25 +74,46 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-  socket.emit("state:update", state);
+  socket.emit("conversation:state", state);
 
-  socket.on("studio:update", (text) => {
-    state.fullText = String(text ?? "").slice(0, 20000);
-    state.englishText = extractEnglish(state.fullText);
+  socket.on("conversation:add", (payload) => {
+    const ruUser = String(payload?.ruUser || "").trim().slice(0, 10000);
+    const rawAnswer = String(payload?.rawAnswer || "").trim().slice(0, 50000);
+
+    if (!ruUser || !rawAnswer) return;
+
+    const parsed = parseModelAnswer(rawAnswer);
+
+    const turn = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      createdAt: new Date().toISOString(),
+      ruUser,
+      ruAI: parsed.ruAI,
+      enUser: parsed.enUser,
+      enAI: parsed.enAI,
+      rawAnswer
+    };
+
+    state.history.push(turn);
+
+    if (state.history.length > 100) {
+      state.history = state.history.slice(-100);
+    }
+
     state.updatedAt = new Date().toISOString();
-    publishState();
+
+    io.emit("conversation:turn", turn);
   });
 
-  socket.on("state:clear", () => {
-    state.fullText = "";
-    state.englishText = "";
+  socket.on("conversation:clear", () => {
+    state.history = [];
     state.updatedAt = new Date().toISOString();
-    publishState();
+    io.emit("conversation:state", state);
   });
 });
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Text Mirror MVP v0.2 running on port ${PORT}`);
+  console.log(`AI Studio MVP v0.4 running on port ${PORT}`);
   console.log(`Studio: http://localhost:${PORT}/studio.html`);
   console.log(`Live:   http://localhost:${PORT}/live.html`);
 });
