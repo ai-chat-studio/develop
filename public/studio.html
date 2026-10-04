@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Studio — MVP v0.2</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">MVP v0.2</div>
+        <h1>AI Studio</h1>
+      </div>
+      <div id="status" class="status status-offline">● offline</div>
+    </header>
+
+    <section class="card">
+      <div class="section-title">Полный ответ</div>
+      <textarea id="source" rows="16" maxlength="20000"
+        placeholder="Вставь сюда полный ответ с ключами 777ROCK777 и 777END777"></textarea>
+
+      <div class="actions">
+        <button id="example" class="primary">Вставить пример</button>
+        <button id="clear" class="secondary">Очистить</button>
+        <a class="button-link secondary" href="/live.html" target="_blank">Открыть LIVE</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">Что уйдёт в LIVE</div>
+      <div id="preview" class="preview empty">Английский блок пока не найден.</div>
+    </section>
+
+    <p class="hint">
+      LIVE берёт только текст между <strong>777ROCK777</strong> и <strong>777END777</strong>.
+      Всё после 777END777 остаётся только в Studio.
+    </p>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/studio.js"></script>
+</body>
+</html>

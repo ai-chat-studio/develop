@@ -1,0 +1,17 @@
+{
+  "name": "text-mirror-mvp-v02",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Studio + Live MVP. Extracts English text between 777ROCK777 and 777END777.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
