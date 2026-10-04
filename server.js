@@ -15,25 +15,25 @@ const USER_END = "777USEROFF777";
 
 const state = {
   history: [],
+  workspace: {
+    rootName: "AI-Studio-Workspace",
+    files: [],
+    truncated: false,
+    updatedAt: null
+  },
   updatedAt: null
 };
 
 function parseModelAnswer(rawText) {
   const raw = String(rawText || "").trim();
-
   const rockIndex = raw.indexOf(ROCK);
 
   if (rockIndex === -1) {
-    return {
-      ruAI: raw,
-      enUser: "",
-      enAI: ""
-    };
+    return { ruAI: raw, enUser: "", enAI: "" };
   }
 
   const ruAI = raw.slice(0, rockIndex).trim();
   const englishSection = raw.slice(rockIndex + ROCK.length).trim();
-
   const userStartIndex = englishSection.indexOf(USER_START);
   const userEndIndex = englishSection.indexOf(USER_END);
 
@@ -52,18 +52,14 @@ function parseModelAnswer(rawText) {
     };
   }
 
-  const enUser = englishSection
-    .slice(userStartIndex + USER_START.length, userEndIndex)
-    .trim();
-
-  const enAI = englishSection
-    .slice(userEndIndex + USER_END.length)
-    .trim();
-
   return {
     ruAI,
-    enUser,
-    enAI
+    enUser: englishSection
+      .slice(userStartIndex + USER_START.length, userEndIndex)
+      .trim(),
+    enAI: englishSection
+      .slice(userEndIndex + USER_END.length)
+      .trim()
   };
 }
 
@@ -88,27 +84,68 @@ function sanitizeFiles(input) {
       const sizeRaw = Number(file?.size);
       const size = Number.isFinite(sizeRaw) && sizeRaw >= 0 ? sizeRaw : 0;
 
-      const extension = String(file?.extension || "")
-        .trim()
-        .slice(0, 30);
-
-      let content = null;
-
-      if (typeof file?.content === "string") {
-        // Keep Live payloads bounded even if Bridge is later configured
-        // to return larger files.
-        content = file.content.slice(0, 200000);
-      }
-
       return {
         action,
         path: filePath,
         size,
-        extension,
+        extension: String(file?.extension || "").slice(0, 30),
+        content:
+          typeof file?.content === "string"
+            ? file.content.slice(0, 200000)
+            : null
+      };
+    })
+    .filter(Boolean);
+}
+
+function sanitizeWorkspace(input) {
+  const source = input && typeof input === "object" ? input : {};
+  const rawFiles = Array.isArray(source.files) ? source.files : [];
+
+  let totalContentChars = 0;
+  const maxTotalContentChars = 2_000_000;
+
+  const files = rawFiles
+    .slice(0, 250)
+    .map((file) => {
+      const filePath = String(file?.path || "")
+        .replace(/\\/g, "/")
+        .trim()
+        .slice(0, 500);
+
+      if (!filePath) return null;
+      if (filePath.startsWith("/") || filePath.includes("../")) return null;
+
+      const sizeRaw = Number(file?.size);
+      const size = Number.isFinite(sizeRaw) && sizeRaw >= 0 ? sizeRaw : 0;
+
+      let content = null;
+
+      if (typeof file?.content === "string") {
+        const remaining = maxTotalContentChars - totalContentChars;
+
+        if (remaining > 0) {
+          content = file.content.slice(0, Math.min(200000, remaining));
+          totalContentChars += content.length;
+        }
+      }
+
+      return {
+        path: filePath,
+        size,
+        extension: String(file?.extension || "").slice(0, 30),
+        mtimeMs: Number(file?.mtimeMs) || 0,
         content
       };
     })
     .filter(Boolean);
+
+  return {
+    rootName: "AI-Studio-Workspace",
+    files,
+    truncated: Boolean(source.truncated),
+    updatedAt: new Date().toISOString()
+  };
 }
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -118,7 +155,12 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-  socket.emit("conversation:state", state);
+  socket.emit("conversation:state", {
+    history: state.history,
+    updatedAt: state.updatedAt
+  });
+
+  socket.emit("workspace:state", state.workspace);
 
   socket.on("conversation:add", (payload) => {
     const ruUser = String(payload?.ruUser || "").trim().slice(0, 10000);
@@ -147,19 +189,25 @@ io.on("connection", (socket) => {
     }
 
     state.updatedAt = new Date().toISOString();
-
     io.emit("conversation:turn", turn);
+  });
+
+  socket.on("workspace:update", (workspace) => {
+    state.workspace = sanitizeWorkspace(workspace);
+    io.emit("workspace:state", state.workspace);
   });
 
   socket.on("conversation:clear", () => {
     state.history = [];
     state.updatedAt = new Date().toISOString();
-    io.emit("conversation:state", state);
+
+    io.emit("conversation:state", {
+      history: state.history,
+      updatedAt: state.updatedAt
+    });
   });
 });
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`AI Studio MVP v0.6 running on port ${PORT}`);
-  console.log(`Studio: http://localhost:${PORT}/studio.html`);
-  console.log(`Live:   http://localhost:${PORT}/live.html`);
+  console.log(`AI Studio MVP v0.7 running on port ${PORT}`);
 });
